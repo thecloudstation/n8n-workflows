@@ -1,0 +1,458 @@
+{
+    "meta": {
+      "instanceId": "8306bac07189426109b85dc84bda2fe508e10d48e9008000e3c6ce251a84a04a"
+    },
+    "nodes": [
+      {
+        "parameters": {
+          "bucketName": "cloudstation",
+          "fileKey": "={{ $json.body.result.transcription_filename }}"
+        },
+        "id": "c6b574e0-ff5c-4787-8f66-a86a32e22d99",
+        "name": "S3",
+        "type": "n8n-nodes-base.s3",
+        "typeVersion": 1,
+        "position": [
+          -1000,
+          740
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "s3": {
+            "id": "DuvvJLxoDM5Logol",
+            "name": "S3 account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "text",
+          "options": {}
+        },
+        "id": "35910ec5-b743-4923-9ba3-844a74662691",
+        "name": "Extract from File",
+        "type": "n8n-nodes-base.extractFromFile",
+        "typeVersion": 1,
+        "position": [
+          -720,
+          740
+        ]
+      },
+      {
+        "parameters": {
+          "authentication": "nocoDbApiToken",
+          "operation": "create",
+          "projectId": "pj68nehju5q0nbi",
+          "table": "mea3u218pucimvj",
+          "fieldsUi": {
+            "fieldValues": [
+              {
+                "fieldName": "formattedChapters",
+                "fieldValue": "={{ $json.chapters }}"
+              },
+              {
+                "fieldName": "formattedDescription",
+                "fieldValue": "={{ $json.description }}"
+              },
+              {
+                "fieldName": "title",
+                "fieldValue": "={{ $json.original_filename }}"
+              },
+              {
+                "fieldName": "transcription",
+                "fieldValue": "=YOUR_MINIO_SERVER_URL/cloudstation/{{ $json.transcription_filename }}"
+              },
+              {
+                "fieldName": "report",
+                "fieldValue": "=YOUR_MINIO_SERVER_URL/cloudstation/{{ $json.report_filename }}"
+              },
+              {
+                "fieldName": "subtitles",
+                "fieldValue": "=YOUR_MINIO_SERVER_URL/cloudstation/{{ $json.srt_filename }}"
+              }
+            ]
+          }
+        },
+        "id": "69fc3e88-84f1-4cc0-af20-d0825edbe638",
+        "name": "NocoDB1",
+        "type": "n8n-nodes-base.nocoDb",
+        "typeVersion": 3,
+        "position": [
+          860,
+          1280
+        ],
+        "credentials": {
+          "nocoDbApiToken": {
+            "id": "zC5Hl8P4Gzx2m9MT",
+            "name": "NocoDB Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "16305008-80e5-4759-9d5a-6296c9140bb1",
+                "name": "chapters",
+                "value": "={{ $json.message.content }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "9aa4957f-eadb-4c07-84c9-8aef9bf49280",
+        "name": "chapters",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -100,
+          640
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "57acd820-cba0-4aba-bd00-25e541a28e94",
+                "name": "description",
+                "value": "={{ $json.message.content }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "c6ce4ed7-0215-4a92-b718-de3be10a94d5",
+        "name": "desc",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -100,
+          880
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "16305008-80e5-4759-9d5a-6296c9140bb1",
+                "name": "srt_filename",
+                "value": "={{ $json.body.result.srt_filename }}",
+                "type": "string"
+              },
+              {
+                "id": "96e0ae05-a884-4c08-8b47-5fd22117d40b",
+                "name": "original_filename",
+                "value": "={{ $json.body.result.original_filename }}",
+                "type": "string"
+              },
+              {
+                "id": "b7a2d8a6-f11b-4d9c-a673-197b09ecc8c4",
+                "name": "transcription_filename",
+                "value": "={{ $json.body.result.transcription_filename }}",
+                "type": "string"
+              },
+              {
+                "id": "a2b9bba4-fdf1-4e48-8d03-eb8ec3d6032a",
+                "name": "report_filename",
+                "value": "={{ $json.body.result.report_filename }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "9e6ace26-4e93-437c-a277-e6d0bc97f8d0",
+        "name": "Get generated fields",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -1000,
+          1300
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineAll",
+          "options": {}
+        },
+        "id": "821ac8bc-9ace-4e94-9bba-88fdc62a7ee6",
+        "name": "Combine desc & chapters",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          300,
+          820
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "combine",
+          "combineBy": "combineAll",
+          "options": {}
+        },
+        "id": "5a66adea-e321-40e7-bbcd-942188bd5fcc",
+        "name": "Combine with  generated files",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 3,
+        "position": [
+          580,
+          1280
+        ]
+      },
+      {
+        "parameters": {
+          "fromEmail": "your-email@gmail.com",
+          "toEmail": "your-email@gmail.com",
+          "subject": "={{ $json.title }} is Ready",
+          "html": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>New Video: {{ $json.title }}</title>\n    <style>\n        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');\n        \n        body {\n            font-family: 'Roboto', Arial, sans-serif;\n            line-height: 1.6;\n            background-color: #f4f7f9;\n            margin: 0;\n            padding: 0;\n            color: #333;\n        }\n        .container {\n            max-width: 600px;\n            margin: 20px auto;\n            background-color: #ffffff;\n            box-shadow: 0 0 20px rgba(0,0,0,0.1);\n            border-radius: 8px;\n            overflow: hidden;\n        }\n        .header {\n            background-color: #3498db;\n            color: #ffffff;\n            padding: 30px;\n            text-align: center;\n            font-size: 28px;\n            font-weight: bold;\n        }\n        .content {\n            padding: 30px;\n        }\n        .video-title {\n            color: #2c3e50;\n            font-size: 24px;\n            margin-top: 0;\n            margin-bottom: 20px;\n            text-align: center;\n        }\n        .section {\n            background-color: #f8f9fa;\n            border-radius: 8px;\n            padding: 20px;\n            margin-bottom: 25px;\n            transition: all 0.3s ease;\n        }\n        .section:hover {\n            box-shadow: 0 5px 15px rgba(0,0,0,0.1);\n            transform: translateY(-3px);\n        }\n        .section-title {\n            font-size: 20px;\n            font-weight: bold;\n            margin-top: 0;\n            margin-bottom: 15px;\n            color: #3498db;\n        }\n        .button {\n            display: inline-block;\n            background-color: #3498db;\n            color: #ffffff;\n            text-decoration: none;\n            padding: 12px 25px;\n            border-radius: 25px;\n            font-weight: bold;\n            margin-top: 15px;\n            transition: all 0.3s ease;\n            text-align: center;\n        }\n        .button:hover {\n            background-color: #2980b9;\n            transform: translateY(-2px);\n            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);\n        }\n        .resources {\n            margin-top: 25px;\n            text-align: center;\n        }\n        .resources .button {\n            margin: 0 10px 15px;\n        }\n        .footer {\n            background-color: #2c3e50;\n            padding: 25px;\n            text-align: center;\n            font-size: 14px;\n            color: #ecf0f1;\n        }\n        .footer a {\n            color: #3498db;\n            text-decoration: none;\n        }\n        .footer a:hover {\n            text-decoration: underline;\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            New Video Available\n        </div>\n        <div class=\"content\">\n            <h2 class=\"video-title\">{{ $json.title }}</h2>\n            \n            <div class=\"section\">\n                <h3 class=\"section-title\">Video Highlights</h3>\n                <p>{{ $json.formattedDescription.slice(0, 500) }}...</p>\n                <a href=\"https://YOUR_NOCODB_URL/dashboard/#/nc/pj68nehju5q0nbi/mea3u218pucimvj\" class=\"button\">Read Full Description</a>\n            </div>\n            \n            <div class=\"section\">\n                <h3 class=\"section-title\">Key Chapters</h3>\n                <p>{{ $json.formattedChapters.slice(0, 300) }}...</p>\n                <a href=\"https://YOUR_NOCODB_URL/dashboard/#/nc/pj68nehju5q0nbi/mea3u218pucimvj\" class=\"button\">Read Full YouTube Chapters</a>\n            </div>\n            \n            <h3 class=\"section-title\">Additional Resources</h3>\n            <div class=\"resources\">\n                <a href=\"{{ $json.report }}\" class=\"button\">Download Report</a>\n                <a href=\"{{ $json.subtitles }}\" class=\"button\">Download Subtitles</a>\n            </div>\n        </div>\n        <div class=\"footer\">\n            <p>&copy; 2024 CloudStation. All rights reserved.</p>\n            <p>If you have any questions, please contact us at <a href=\"mailto:youremail@gmail.com\">youremail@gmail.com</a></p>\n        </div>\n    </div>\n</body>\n</html>",
+          "options": {}
+        },
+        "id": "604087bc-d4ff-4504-95ac-1b8c85ed931d",
+        "name": "Send Email",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          1100,
+          1260
+        ],
+        "credentials": {
+          "smtp": {
+            "id": "JNCxqjwSGtj9lwYb",
+            "name": "SMTP account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "b02f6f6f-2f90-4929-ab59-0d93568dc4a0",
+          "options": {}
+        },
+        "id": "4896d05c-c5bf-4080-adfb-f9d348100037",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -1920,
+          740
+        ],
+        "webhookId": "b02f6f6f-2f90-4929-ab59-0d93568dc4a0"
+      },
+      {
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "value": "gpt-3.5-turbo",
+            "mode": "list",
+            "cachedResultName": "GPT-3.5-TURBO"
+          },
+          "messages": {
+            "values": [
+              {
+                "content": "={{ $json.data }}"
+              },
+              {
+                "content": "=You are an AI assistant that creates concise, meaningful YouTube video chapters based on provided transcriptions. Your task is to identify key segments of the video that represent major topic changes or significant milestones. Follow these guidelines:\n\nAnalyze the transcription to identify main topics and important transitions in content.\nCreate chapters only for substantial shifts in subject matter or major new concepts introduced.\nAim for 4-8 chapters for a typical video, unless the content clearly requires more or fewer.\nFormat each chapter as \"timestamp Chapter title\" (e.g., \"5:23 Introduction to Machine Learning\").\nUse brief, descriptive titles that clearly indicate the content of each section.\nEnsure the first chapter always starts at 0:00.\nAdd relevant emojis to chapter titles when appropriate.\nInclude a line break between each chapter.\n\nExample format:\nChapters:\n0:00 🌟 Introduction\n7:15 🔑 Key Concept Explained\n15:30 🛠️ Practical Application\n22:45 🏁 Conclusion and Next Steps\nRemember, quality over quantity. Only create a new chapter when there's a significant change in topic or focus that viewers would benefit from being able to navigate to directly.",
+                "role": "system"
+              }
+            ]
+          },
+          "options": {
+            "maxTokens": 500
+          }
+        },
+        "id": "6afeb29f-11b7-4b45-a351-0957b2e97e32",
+        "name": "Generate Chapters",
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "typeVersion": 1.4,
+        "position": [
+          -480,
+          640
+        ],
+        "credentials": {
+          "openAiApi": {
+            "id": "NpK1CS3vf6M1cr13",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "value": "gpt-3.5-turbo",
+            "mode": "list",
+            "cachedResultName": "GPT-3.5-TURBO"
+          },
+          "messages": {
+            "values": [
+              {
+                "content": "=You are an AI assistant that creates concise YouTube video descriptions. Your task is to summarize the main points of a video in a brief, engaging manner. Follow these guidelines:\n\nWrite a single paragraph of 2-3 sentences that captures the essence of the video.\nInclude the main topic and 1-2 key points.\nEnd with a simple call-to-action.\nKeep the total length under 50 words.\nUse a conversational tone.\nInclude 1-2 relevant hashtags at the end.\n\nEnsure the description is clear, accurate, and enticing to potential viewers.",
+                "role": "system"
+              },
+              {
+                "content": "= {{ $json.data }} "
+              }
+            ]
+          },
+          "options": {
+            "maxTokens": 500
+          }
+        },
+        "id": "f40eec84-cb97-4150-b18d-da9f3884554a",
+        "name": "Generate Description",
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "typeVersion": 1.4,
+        "position": [
+          -480,
+          880
+        ],
+        "credentials": {
+          "openAiApi": {
+            "id": "NpK1CS3vf6M1cr13",
+            "name": "OpenAi account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "S3": {
+        "main": [
+          [
+            {
+              "node": "Extract from File",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Extract from File": {
+        "main": [
+          [
+            {
+              "node": "Generate Chapters",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Generate Description",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "NocoDB1": {
+        "main": [
+          [
+            {
+              "node": "Send Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "chapters": {
+        "main": [
+          [
+            {
+              "node": "Combine desc & chapters",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "desc": {
+        "main": [
+          [
+            {
+              "node": "Combine desc & chapters",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Get generated fields": {
+        "main": [
+          [
+            {
+              "node": "Combine with  generated files",
+              "type": "main",
+              "index": 1
+            }
+          ]
+        ]
+      },
+      "Combine desc & chapters": {
+        "main": [
+          [
+            {
+              "node": "Combine with  generated files",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Combine with  generated files": {
+        "main": [
+          [
+            {
+              "node": "NocoDB1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "S3",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Get generated fields",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Chapters": {
+        "main": [
+          [
+            {
+              "node": "chapters",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate Description": {
+        "main": [
+          [
+            {
+              "node": "desc",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {}
+  }

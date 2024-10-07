@@ -1,0 +1,145 @@
+{
+    "meta": {
+      "instanceId": "8306bac07189426109b85dc84bda2fe508e10d48e9008000e3c6ce251a84a04a"
+    },
+    "nodes": [
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "PYTHON_SCRIPT_URL/convert_and_transcribe",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "X-API-Key",
+                "value": "YOUR_API_KEY"
+              }
+            ]
+          },
+          "sendBody": true,
+          "contentType": "raw",
+          "rawContentType": "application/json",
+          "body": "={\"filename\": \"{{ $json.body.Records[0].s3.object.key }}\"} ",
+          "options": {}
+        },
+        "id": "2f8069c2-0797-483e-b060-1935ae87cd5b",
+        "name": "transcript",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          580,
+          340
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "a39c532f-94e9-4595-886b-ea7388335721",
+                "leftValue": "={{ $json.body.Key }}",
+                "rightValue": ".txt",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEndsWith"
+                }
+              },
+              {
+                "id": "b90a2cb6-f15a-4a13-a81d-c68b00ddd804",
+                "leftValue": "={{ $json.body.Key }}",
+                "rightValue": ".srt",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEndsWith"
+                }
+              },
+              {
+                "id": "4609ec80-9a80-43f0-a492-c87396ef20fe",
+                "leftValue": "={{ $json.body.Key }}",
+                "rightValue": ".png",
+                "operator": {
+                  "type": "string",
+                  "operation": "notEndsWith"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "c0c10102-4a99-46f6-97c2-0a8cea935ecc",
+        "name": "If",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          240,
+          480
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "43d30de2-6f45-4494-9410-516ca4af58e2",
+        "name": "No Operation, do nothing",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          440,
+          620
+        ]
+      },
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "083c426e-5bee-4027-b1eb-39151323b147",
+          "options": {}
+        },
+        "id": "26938f58-3518-42e3-96eb-262871fb167c",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          20,
+          480
+        ],
+        "webhookId": "083c426e-5bee-4027-b1eb-39151323b147"
+      }
+    ],
+    "connections": {
+      "If": {
+        "main": [
+          [
+            {
+              "node": "transcript",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "No Operation, do nothing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "If",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {}
+  }
