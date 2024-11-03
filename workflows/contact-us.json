@@ -1,0 +1,238 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "c5704a75-53b8-4f86-b1b1-2b62268c2b76",
+          "options": {}
+        },
+        "id": "a2c41927-3c19-4f2e-b70f-8d9543c9f8e2",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2,
+        "position": [
+          -60,
+          600
+        ],
+        "webhookId": "aaed82b9-ada4-47f6-82a7-6693c80455d3"
+      },
+      {
+        "parameters": {
+          "fromEmail": "contact@oumnya.com",
+          "toEmail": "={{ $json.body.data.rows[0].Email }}",
+          "subject": " Thanks for reaching out! 📫",
+          "emailFormat": "text",
+          "text": "=Hi {{ $json.body.data.rows[0].Name }},\n\nThanks for getting in touch! We've received your message and we're exited to connect with you.\nOur team will get bacck to you personally within the next few minutes.\nBest regards,\n\nCS Team\n",
+          "options": {
+            "appendAttribution": false
+          }
+        },
+        "id": "3564f4c9-925f-4aaf-8490-925cd8279189",
+        "name": "Transactional email",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          460,
+          460
+        ],
+        "credentials": {
+          "smtp": {
+            "id": "JNCxqjwSGtj9lwYb",
+            "name": "SMTP CS"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "=https://r.jina.ai/{{ $json.body.data.rows[0].Website }}",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Authorization",
+                "value": "Bearer YOUR_TOKEN"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "295e8984-48b2-489d-89a4-284feda06084",
+        "name": "Scrape website",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          440,
+          700
+        ]
+      },
+      {
+        "parameters": {
+          "fromEmail": "contact@oumnya.com",
+          "toEmail": "={{ $('Webhook').item.json.body.data.rows[0].Email }}",
+          "subject": "={{ $json.message.content.subject }}",
+          "emailFormat": "text",
+          "text": "=Hi {{ $('Webhook').item.json.body.data.rows[0].Name }},\n\n{{ $json.message.content.body }}\n\nRegards,\nOumnya",
+          "options": {
+            "appendAttribution": false
+          }
+        },
+        "id": "f03ab986-8a7b-4a9a-b058-672d9288e4c3",
+        "name": "Personalised Email",
+        "type": "n8n-nodes-base.emailSend",
+        "typeVersion": 2.1,
+        "position": [
+          1040,
+          700
+        ],
+        "credentials": {
+          "smtp": {
+            "id": "JNCxqjwSGtj9lwYb",
+            "name": "SMTP CS"
+          }
+        }
+      },
+      {
+        "parameters": {},
+        "id": "6fa27d1e-562f-408b-8365-7f26d1e40c9e",
+        "name": "Wait",
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          240,
+          700
+        ],
+        "webhookId": "1150c3e9-1fa2-46a8-9ea6-c93cb048d591"
+      },
+      {
+        "parameters": {
+          "authentication": "nocoDbApiToken",
+          "operation": "update",
+          "projectId": "pgq92gx8p6lgajw",
+          "table": "m2jo2kl6q6yytjm",
+          "fieldsUi": {
+            "fieldValues": [
+              {
+                "fieldName": "Status",
+                "fieldValue": "Contacted"
+              },
+              {
+                "fieldName": "id",
+                "fieldValue": "={{ $('Webhook').item.json.body.data.rows[0].Id }}"
+              }
+            ]
+          }
+        },
+        "id": "7301e286-4471-4c7c-82f4-4fa1b070abee",
+        "name": "NocoDB",
+        "type": "n8n-nodes-base.nocoDb",
+        "typeVersion": 3,
+        "position": [
+          1260,
+          700
+        ],
+        "credentials": {
+          "nocoDbApiToken": {
+            "id": "zC5Hl8P4Gzx2m9MT",
+            "name": "NocoDB Token account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "modelId": {
+            "__rl": true,
+            "value": "gpt-4o",
+            "mode": "list",
+            "cachedResultName": "GPT-4O"
+          },
+          "messages": {
+            "values": [
+              {
+                "content": "=You are a helpful sales assistant for an automation agency. Create a personalized email reply based on the prospect's website content and their inquiry message. Look for opportunities to discuss automation, efficiency improvements, or digital transformation based on their website content. Keep the tone friendly and consultative.\nWebsite Content : {{ $json.data }}\nTheir message : {{ $('Webhook').item.json.body.data.rows[0].Message }}\n\nRules for the response:\n1. DO NOT include any greetings (no \"Hi\", \"Hey\", \"Hello\", etc.)\n2. DO NOT include any signature or \"Best\" or name at the end\n3. Start directly with your observation about their website\n4. Make a connection between what you see on their website and potential automation opportunities\n5. Acknowledge their specific message/needs\n6. Keep it casual and conversational (like you just checked out their site while on your phone)\n7. End ONLY with \"I'm out of the office right now, but want to chat when I'm back? Just send over a couple of times that work for you.\"\n8. Maximum 4-5 sentences total\n9. Don't use corporate jargon or buzzwords\n10. Don't oversell or make specific promises\n11. Don't mention specific numbers or metrics unless they were in their message\n\nExpected format (keep it as ONE paragraph):\nFormat:\nsubject: [Brief subject with emoji]\nbody : \n\n[Your personalized message based on their website...]\n\n[Quick reference to their specific inquiry...]\n\nI'm out of the office right now, but want to chat when I'm back? Just send over a couple of times that work for you.\n\nBest,",
+                "role": "system"
+              }
+            ]
+          },
+          "jsonOutput": true,
+          "options": {}
+        },
+        "id": "4442d70e-ea42-4709-8bed-2e1bd4f84ee4",
+        "name": "OpenAI",
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "typeVersion": 1.6,
+        "position": [
+          660,
+          700
+        ],
+        "credentials": {
+          "openAiApi": {
+            "id": "NpK1CS3vf6M1cr13",
+            "name": "OpenAi account"
+          }
+        }
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Transactional email",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Wait",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Scrape website": {
+        "main": [
+          [
+            {
+              "node": "OpenAI",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Personalised Email": {
+        "main": [
+          [
+            {
+              "node": "NocoDB",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait": {
+        "main": [
+          [
+            {
+              "node": "Scrape website",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI": {
+        "main": [
+          [
+            {
+              "node": "Personalised Email",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {}
+  }
