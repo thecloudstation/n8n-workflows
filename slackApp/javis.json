@@ -1,0 +1,51 @@
+{
+    "display_information": {
+        "name": "JarvisBiz",
+        "description": "Your 24/7 AI sales team 🤖",
+        "background_color": "#d83469"
+    },
+    "features": {
+        "bot_user": {
+            "display_name": "JarvisBiz",
+            "always_online": true
+        }
+    },
+    "oauth_config": {
+        "scopes": {
+            "user": [
+                "search:read"
+            ],
+            "bot": [
+                "chat:write",
+                "chat:write.customize",
+                "groups:history",
+                "groups:read",
+                "groups:write",
+                "groups:write.invites",
+                "groups:write.topic",
+                "im:history",
+                "im:read",
+                "im:write",
+                "mpim:history",
+                "mpim:read",
+                "mpim:write",
+                "mpim:write.topic",
+                "usergroups:read",
+                "usergroups:write",
+                "users:write",
+                "channels:history"
+            ]
+        }
+    },
+    "settings": {
+        "event_subscriptions": {
+            "request_url": "https://YOUR_N8N_WEBHOOK_URL",
+            "bot_events": [
+                "message.im"
+            ]
+        },
+        "org_deploy_enabled": false,
+        "socket_mode_enabled": false,
+        "token_rotation_enabled": false
+    }
+}
