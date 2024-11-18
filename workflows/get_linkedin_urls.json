@@ -1,0 +1,661 @@
+{
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "deda5856-8cb3-4bfc-bb70-d294cc10795e",
+        "name": "Execute Workflow Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          -980,
+          460
+        ]
+      },
+      {
+        "parameters": {
+          "text": "={{ $json.query }}",
+          "attributes": {
+            "attributes": [
+              {
+                "name": "job_title",
+                "description": "The job title to search for (e.g Chief Technical officer, CTO)"
+              },
+              {
+                "name": "company_type",
+                "description": "The type of company (e.g Startup, early stage)"
+              },
+              {
+                "name": "location",
+                "description": "The location to search in (e.g France)"
+              },
+              {
+                "name": "company_size",
+                "description": "The size of the company (e.g, small , large)"
+              },
+              {
+                "name": "industry",
+                "description": "The industry of the company (e,g, healthcare)"
+              },
+              {
+                "name": "lead_number",
+                "description": "number of leads to get"
+              }
+            ]
+          },
+          "options": {
+            "systemPromptTemplate": "You are an advanced extraction algorithm with deep knowledge of business roles, terminology, and industry dynamics. Your task is to analyze input text and extract relevant information, while also considering the broader context and potential applications of the extracted data. Your goal is to be comprehensive and inclusive in your extractions to support a wide range of business use cases.\n\nCarefully analyze the input text to extract the following details:\n\njob_title: [Primary Title], [Alternative Title 1], [Alternative Title 2], [Alternative Title 3], [Common Abbreviation], [Related Role]\ncompany_type: [Primary Type], [Alternative Type 1], [Alternative Type 2], [Alternative Type 3], [Startup Indicator], [Broad Category]\nlocation: [Primary Location], [Alternative Location 1], [Alternative Location 2], [Alternative Location 3], [Country], [Region], [Continent]\ncompany_size: [Primary Size], [Alternative Size 1], [Alternative Size 2], [Alternative Size 3], [Exact Number if Provided], [Range]\nindustry: [Primary Industry], [Related Industry 1], [Related Industry 2], [Related Industry 3], [General Industry Term], [Broader Sector]\nlead_number: [Number of profiles to get]\n\nGuidelines:\n- For job titles, include the full title, common abbreviations, and related roles that might use different terminology but have similar responsibilities.\n- For company type, always include \"startup\" if mentioned, and provide relevant alternatives based on the context. Include broader categories that the company type might fall under.\n- For locations, include city names, country names, regions, and continents. Be specific about countries or cities mentioned, especially for regions like the Middle East, but also include broader geographical terms.\n- For company size, use exact numbers if provided, include alternative descriptive terms, and provide size ranges.\n- For industries, use the specific industry mentioned as the primary industry, include related industries, and provide both specific and general relevant terms. Also include broader sector classifications.\n- For lead_number, extract the specific number if provided. If not found, default to 100 to ensure a substantial dataset.\n- If any field is not explicitly mentioned or cannot be confidently inferred, use \"\" as the primary entry, but strive to fill in as many alternative fields as possible based on context and general knowledge.\n\nAdditional Considerations:\n- Identify potential real-world applications and benefits of the extracted information, such as in recruitment, market analysis, or business intelligence.\n- Explore innovative ways to enhance the extraction algorithm, such as incorporating natural language processing techniques or presenting the information in novel formats.\n- Analyze the input text for patterns, trends, or connections that could be leveraged to improve the extraction process and the quality of the output.\n- Consider how the extracted information could be used in various business contexts and try to provide data that would be valuable across different use cases.\n\nRemember: While accuracy remains essential, the algorithm should strive to provide comprehensive, creative, and well-structured information. Err on the side of inclusivity rather than being overly restrictive in your extractions.\n"
+          }
+        },
+        "id": "161b402d-96d5-4215-8241-48cd21a2428b",
+        "name": "Information Extractor",
+        "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+        "typeVersion": 1,
+        "position": [
+          -780,
+          460
+        ]
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "1b7aa714-7259-4239-a683-113093b7a7be",
+        "name": "OpenAI Chat Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+        "typeVersion": 1,
+        "position": [
+          -760,
+          660
+        ],
+        "credentials": {
+          "openAiApi": {
+            "id": "NpK1CS3vf6M1cr13",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Extract the values from the Information Extractor node\nconst jobTitle = $node[\"Information Extractor\"].json.output.job_title || \"\";\nconst companyType = $node[\"Information Extractor\"].json.output.company_type || \"\";\nconst location = $node[\"Information Extractor\"].json.output.location || \"\";\nconst companySize = $node[\"Information Extractor\"].json.output.company_size || \"\";\nconst industry = $node[\"Information Extractor\"].json.output.industry || \"\";\nconst lead_number = $node[\"Information Extractor\"].json.output.lead_number || \"100\";\n\n// Function to process and limit terms (with reduced limits)\nfunction processTerms(input, limit = 3) { // Reduced default limit to 3\n  return input.split(/\\s*(?:OR|,)\\s*/)\n               .map(term => term.trim())\n               .filter(term => term.length > 0)\n               .slice(0, limit)  // Limit to top 3 terms per category\n               // Only add quotes if term contains special characters like parentheses\n               .map(term => term.includes('(') || term.includes(')') ? `\"${term}\"` : term)\n               .join(' OR ');\n}\n\n// Process each category with stricter limits\nconst jobTitleQuery = processTerms(jobTitle, 3);         // Reduced from 5\nconst companyTypeQuery = processTerms(companyType, 2);   // Reduced from 4\nconst locationQuery = processTerms(location, 2);         // Reduced from 6\nconst companySizeQuery = processTerms(companySize, 2);   // Reduced from 3\nconst industryQuery = processTerms(industry, 2);         // Reduced from 5\n\n// Construct the optimized base search query\nconst baseQuery = `site:linkedin.com/in/ (${jobTitleQuery}) (${companyTypeQuery}) (${locationQuery}) -formerly`;\n\n// Calculate pagination info\nconst resultsPerPage = 100;\nconst totalPages = Math.ceil(parseInt(lead_number) / resultsPerPage);\n\n// Function to remove empty parentheses\nfunction removeEmptyParentheses(query) {\n  return query.replace(/\\(\\s*\\)/g, '').replace(/\\s+/g, ' ').trim();\n}\n\n// Optimize the query\nconst optimizedQuery = removeEmptyParentheses(baseQuery);\n\n// Create array of requests with correct num values\nconst requests = [];\nfor(let i = 0; i < totalPages; i++) {\n    // Calculate remaining results\n    const remainingResults = parseInt(lead_number) - (i * resultsPerPage);\n    // Use 100 or remaining results, whichever is smaller\n    const numResults = Math.min(resultsPerPage, remainingResults);\n    \n    requests.push({\n        json: {\n            q: optimizedQuery,\n            num: numResults.toString(),\n            start: (i * 100).toString(),\n        }\n    });\n}\n\n// Return array of request objects\nreturn requests;"
+        },
+        "id": "7c75a715-7a69-492e-8533-6f071aef54a9",
+        "name": "Generate google URL",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -240,
+          460
+        ]
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "0fd4ac1d-1b36-44ac-b65b-86dcc1e59ac3",
+        "name": "serp pagination",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          -20,
+          460
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c807098e-66d4-4a75-8666-78bd66b1526e",
+                "leftValue": "={{ $('serp pagination').context[\"noItemsLeft\"] }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              },
+              {
+                "id": "91a497e9-e9fd-4ed4-bbe7-3da110c5a2a6",
+                "leftValue": "={{ $json.search_information.organic_results_state }}",
+                "rightValue": "Fully empty",
+                "operator": {
+                  "type": "string",
+                  "operation": "contains"
+                }
+              }
+            ],
+            "combinator": "or"
+          },
+          "options": {}
+        },
+        "id": "12d48a55-6bbe-4266-9a5f-47779eafd7de",
+        "name": "If",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          520,
+          480
+        ]
+      },
+      {
+        "parameters": {
+          "url": "https://serpapi.com/search",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "api_key"
+              },
+              {
+                "name": "num",
+                "value": "={{ $json.num }}"
+              },
+              {
+                "name": "q",
+                "value": "={{ $json.q }}"
+              },
+              {
+                "name": "start",
+                "value": "={{ $json.start }}"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "d1a96510-1b15-4f59-befa-b771f4c6cd99",
+        "name": "serp req",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          280,
+          480
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "// Function to extract essential profile data\nfunction extractProfileData(result) {\n    if (!result) return null;\n    \n    return {\n        name: result.title?.split(\"-\")[0]?.trim() || \"\",\n        title: result.title?.split(\"-\").slice(1).join(\"-\")?.trim() || \"\",\n        link: result.link || \"\",\n        company: result.title?.split(\"-\").slice(1).join(\"-\")?.trim() || \"\",\n        snippet: result.snippet || \"\",\n        followers: result.displayed_link?.includes(\"followers\") ? \n            result.displayed_link?.replace(/\\+|\\s+followers/g, \"\").trim() : \"\",\n    };\n}\n\n// Initialize results array\nlet combinedResults = [];\n\n// Process all batches\nlet i = 0;\ndo {\n    try {\n        // Get items from current batch\n        const currentBatch = $(\"serp req\").all(0, i);\n        \n        // Process each SERP response in the batch\n        currentBatch.forEach(item => {\n            if (item?.json?.organic_results) {\n                const profiles = item.json.organic_results\n                    .map(extractProfileData)\n                    .filter(profile => profile !== null);\n                    \n                combinedResults = combinedResults.concat(profiles);\n            }\n        });\n        \n        i++;\n    } catch (error) {\n        // No more batches to process\n        break;\n    }\n} while (true);\n\n// Remove duplicates based on LinkedIn profile URL\nconst uniqueResults = Array.from(new Map(\n    combinedResults.map(item => [item.link, item])\n).values());\n\n// Return the final merged results\nreturn [{ json: {\n    total_profiles: uniqueResults.length,\n    profiles: uniqueResults\n}}];"
+        },
+        "id": "d02eaf14-09b8-4bcc-b425-5c33221c1b5f",
+        "name": "merge serp response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          740,
+          340
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "98bc3b22-a393-4b71-a3a6-4d02aba9e3e5",
+                "name": "campaign",
+                "value": "={{ $json.output.job_title }}_{{ $json.output.company_type }}_{{ $json.output.location }}_{{ $json.output.company_size }}_{{ $json.output.industry }}",
+                "type": "string"
+              },
+              {
+                "id": "7ceceee6-fe04-4ee8-94cc-f1309e70781a",
+                "name": "",
+                "value": "",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "9a44909c-9a5a-4198-9b21-6609c91854c6",
+        "name": "set campaign",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          -420,
+          460
+        ]
+      },
+      {
+        "parameters": {
+          "fieldToSplitOut": "profiles",
+          "options": {}
+        },
+        "id": "5048de19-d31b-41c5-911c-35000b7cf665",
+        "name": "Split Out",
+        "type": "n8n-nodes-base.splitOut",
+        "typeVersion": 1,
+        "position": [
+          960,
+          340
+        ]
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "743f35de-9080-4b48-92ef-c72f421e293f",
+        "name": "Loop Over Items",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          1640,
+          200
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "a5260c4c-777f-4e2e-ab3e-b94f4e83577e",
+                "leftValue": "={{ $('merge serp response').item.json.total_profiles }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "3bf87f6f-6a00-4b02-be7f-3797d915320f",
+        "name": "If1",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1180,
+          340
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "1eae4939-3a88-4f83-a278-fefd58d05a15",
+        "name": "No Operation, do nothing",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          1400,
+          540
+        ]
+      },
+      {
+        "parameters": {
+          "authentication": "nocoDbApiToken",
+          "operation": "getAll",
+          "projectId": "pspy8g4s1vm6y90",
+          "table": "muj13p20c3j2tx6",
+          "options": {
+            "where": "=(linkedinUrl,eq,{{ $json.link }})"
+          }
+        },
+        "id": "cf23b1d4-5e2b-461b-814b-3607ff1b0f63",
+        "name": "NocoDB",
+        "type": "n8n-nodes-base.nocoDb",
+        "typeVersion": 3,
+        "position": [
+          2000,
+          220
+        ],
+        "alwaysOutputData": true,
+        "credentials": {
+          "nocoDbApiToken": {
+            "id": "Z9JlzWWJoUPEpsXE",
+            "name": "lead_gen_token"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "22413ca9-665f-42e4-907f-913b474a00ef",
+                "leftValue": "={{ $json }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "object",
+                  "operation": "notEmpty",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "70b5b561-6d52-41ce-96a7-66bae0fee5c8",
+        "name": "lead exists",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          2220,
+          220
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "6dd98ba4-2067-4284-ab60-f926473c80e4",
+                "name": "=name",
+                "value": "={{ $('Loop Over Items').item.json.name }}",
+                "type": "string"
+              },
+              {
+                "id": "3e08cc22-d1bd-4bca-9fe2-9982b719d36a",
+                "name": "title",
+                "value": "={{ $('Loop Over Items').item.json.title }}",
+                "type": "string"
+              },
+              {
+                "id": "b54b7ce8-e16f-42e6-9206-a8938b082f3c",
+                "name": "linkedinUrl",
+                "value": "={{ $('Loop Over Items').item.json.link }}",
+                "type": "string"
+              },
+              {
+                "id": "b7b3fbf8-f3cf-4fa2-9443-608386fea78b",
+                "name": "company",
+                "value": "={{ $('Loop Over Items').item.json.company }}",
+                "type": "string"
+              },
+              {
+                "id": "cfffdb6e-6e57-455a-af6f-d57bab5828cb",
+                "name": "followers",
+                "value": "={{ $('Loop Over Items').item.json.followers }}",
+                "type": "string"
+              },
+              {
+                "id": "36e73404-500d-4e48-87d2-d9f22f81b949",
+                "name": "campaign",
+                "value": "={{ $('set campaign').item.json.campaign }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "8e30b939-1176-4dec-b230-a052e14465c2",
+        "name": "set lead",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          2440,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "authentication": "nocoDbApiToken",
+          "operation": "create",
+          "projectId": "pspy8g4s1vm6y90",
+          "table": "muj13p20c3j2tx6",
+          "dataToSend": "autoMapInputData"
+        },
+        "id": "8d0dbd5d-1a9e-4004-baa4-e5821da9b1bc",
+        "name": "NocoDB1",
+        "type": "n8n-nodes-base.nocoDb",
+        "typeVersion": 3,
+        "position": [
+          2660,
+          240
+        ],
+        "credentials": {
+          "nocoDbApiToken": {
+            "id": "Z9JlzWWJoUPEpsXE",
+            "name": "lead_gen_token"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "061a000f-4718-4c36-b343-3a60d81ec020",
+                "name": "response",
+                "value": "=The campaign : {{ $('set campaign').item.json.campaign }} is added to the database \nNumber of leads : {{ $('merge serp response').item.json.total_profiles }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "id": "b865c1ea-a657-466c-8fa9-78e69596f3dd",
+        "name": "Ai response",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1840,
+          0
+        ],
+        "executeOnce": true
+      }
+    ],
+    "connections": {
+      "Execute Workflow Trigger": {
+        "main": [
+          [
+            {
+              "node": "Information Extractor",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Information Extractor": {
+        "main": [
+          [
+            {
+              "node": "set campaign",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Information Extractor",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Generate google URL": {
+        "main": [
+          [
+            {
+              "node": "serp pagination",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "serp pagination": {
+        "main": [
+          [
+            {
+              "node": "serp req",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If": {
+        "main": [
+          [
+            {
+              "node": "merge serp response",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "serp pagination",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "serp req": {
+        "main": [
+          [
+            {
+              "node": "If",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "merge serp response": {
+        "main": [
+          [
+            {
+              "node": "Split Out",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "set campaign": {
+        "main": [
+          [
+            {
+              "node": "Generate google URL",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split Out": {
+        "main": [
+          [
+            {
+              "node": "If1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Items": {
+        "main": [
+          [
+            {
+              "node": "Ai response",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "NocoDB",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If1": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "No Operation, do nothing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "NocoDB": {
+        "main": [
+          [
+            {
+              "node": "lead exists",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "lead exists": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "set lead",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "set lead": {
+        "main": [
+          [
+            {
+              "node": "NocoDB1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "NocoDB1": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {}
+  }
