@@ -1,0 +1,776 @@
+{
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -740,
+        -240
+      ],
+      "id": "5aef55ed-cc16-4cf5-8ca6-b9bf0cc515a0",
+      "name": "When clicking ‘Test workflow’"
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pspy8g4s1vm6y90",
+        "table": "muj13p20c3j2tx6",
+        "options": {
+          "fields": [],
+          "where": "=(lead_status,like,%NEED_ENRICHMENT%)"
+        }
+      },
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        -360,
+        -40
+      ],
+      "id": "729bbb3f-58a6-415c-b905-04368eb05d2e",
+      "name": "NocoDB",
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "zC5Hl8P4Gzx2m9MT",
+          "name": "Youtube"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -140,
+        -40
+      ],
+      "id": "290ef2d9-5459-43f2-96f6-e6ed9831eb4a",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random()*(20-10+1)+10) }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        120,
+        -20
+      ],
+      "id": "4d26abce-6006-4b0d-9498-31e43e949869",
+      "name": "Wait",
+      "webhookId": "1fdf9827-87d1-4abd-9fab-2d05fdcb74c2"
+    },
+    {
+      "parameters": {
+        "url": "=https://linkedin-scraper/search?url={{ $('Loop Over Items').item.json.linkedinUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "value"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        340,
+        -20
+      ],
+      "id": "21c8f803-a1df-4b4f-abdc-25ea64ced73a",
+      "name": "scrape lead",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5f7831d3-03d5-4498-b9f4-7988aa95af02",
+              "leftValue": "={{$json.error}}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        560,
+        -20
+      ],
+      "id": "03290737-4c11-436e-a4bb-bf5b70cd2b39",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f290e9ab-33da-4e19-be9b-ed1aff6a593e",
+              "name": "firstName",
+              "value": "={{ $json.data.firstName }}",
+              "type": "string"
+            },
+            {
+              "id": "c7f75c83-3b1d-48cb-9d5a-93d2510e8393",
+              "name": "lastName",
+              "value": "={{ $json.data.lastName }}",
+              "type": "string"
+            },
+            {
+              "id": "bdb77ea2-45d2-42a6-8cf7-fa1b033919d5",
+              "name": "location",
+              "value": "={{ $json.data.locationName }}",
+              "type": "string"
+            },
+            {
+              "id": "6b3d959a-4f4c-4195-b74f-02265a135b39",
+              "name": "headline",
+              "value": "={{ $json.data.headline }}",
+              "type": "string"
+            },
+            {
+              "id": "6fcc506b-02e3-4d02-b6d3-f4efea994847",
+              "name": "industryName",
+              "value": "={{ $json.data.industryName }}",
+              "type": "string"
+            },
+            {
+              "id": "a0d046a8-e544-4297-9299-0a7255b2e087",
+              "name": "summary",
+              "value": "={{ $json.data.summary }}",
+              "type": "string"
+            },
+            {
+              "id": "292b7bbc-0f6c-451f-a9e5-58b46f9fb579",
+              "name": "companyName",
+              "value": "={{ $json.data.experience[0].companyName }}",
+              "type": "string"
+            },
+            {
+              "id": "cfc30492-0407-4cf6-bb6d-c92ceb471166",
+              "name": "Id",
+              "value": "={{ $('NocoDB').item.json.Id }}",
+              "type": "string"
+            },
+            {
+              "id": "68ed0213-43e6-4212-9bef-d25d4d6363f1",
+              "name": "company_urn",
+              "value": "={{ $json.data.experience[0].companyUrn }}",
+              "type": "string"
+            },
+            {
+              "id": "808fcaf6-80ac-4c7b-b116-ff6921f53f39",
+              "name": "title",
+              "value": "={{ $json.data.experience[0].title }}",
+              "type": "string"
+            },
+            {
+              "id": "d301efa8-cadf-4643-a2b2-58de30a69274",
+              "name": "lead_status",
+              "value": "ENRICHED",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        780,
+        -120
+      ],
+      "id": "bb8a8833-b3d5-4994-b62f-f86febde7cb2",
+      "name": "Set leads"
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "update",
+        "projectId": "pspy8g4s1vm6y90",
+        "table": "muj13p20c3j2tx6",
+        "dataToSend": "autoMapInputData"
+      },
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        940,
+        -120
+      ],
+      "id": "509b124c-a031-49fe-8537-57fddd221e5a",
+      "name": "Update lead",
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "zC5Hl8P4Gzx2m9MT",
+          "name": "Youtube"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ae341d6c-2f0c-4945-a434-a5da4eff274f",
+              "leftValue": "={{ $json.company_urn }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        -120
+      ],
+      "id": "d1cff746-30e8-45d4-b3fc-f3e803cf094b",
+      "name": "scrape company ?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Access the JSON data from the current item in the loop\nconst jsonData = $input.json;\n\n// Extract the companyUrn from the JSON data\nconst companyUrn = $json.company_urn\n\n// Log the companyUrn\nconsole.log('Company URN:', companyUrn);\n\n// Extract the numeric part from the urn\nconst companyId = companyUrn.split(':').pop();\n\n// Log the extracted companyId\nconsole.log('Extracted Company ID:', companyId);\n\n// Output the extracted value as an object\nreturn {\n  json: {\n    companyId: companyId\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        -220
+      ],
+      "id": "f6c5fb93-71ca-4f53-a5c2-327e7a114f57",
+      "name": "Extract URN"
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pspy8g4s1vm6y90",
+        "table": "mbiipmtuxcsimo8",
+        "options": {
+          "where": "=(companyUrn,like,%{{ $json.companyId }}%)"
+        }
+      },
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        1560,
+        -220
+      ],
+      "id": "2480c306-45f7-43b5-917d-df39d8ca4260",
+      "name": "Get company by urn",
+      "alwaysOutputData": true,
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "zC5Hl8P4Gzx2m9MT",
+          "name": "Youtube"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7065eaa1-95c5-4419-b812-64b58c3bee13",
+              "leftValue": "={{$json}}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1780,
+        -220
+      ],
+      "id": "f56892e8-30e3-4c81-b433-228a062d0ca9",
+      "name": "company exists ?"
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random()*(20-10+1)+10) }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2000,
+        -320
+      ],
+      "id": "26302340-7d50-48a0-947e-cf87c97458e2",
+      "name": "Wait to scrape company",
+      "webhookId": "f571ad9d-2a38-4d00-8474-d88af75fe0ff"
+    },
+    {
+      "parameters": {
+        "url": "=https://linkedin-scraper/company/{{ $('Extract URN').item.json.companyId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "value"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        -320
+      ],
+      "id": "0c570535-3a65-4fca-a6ad-f2532378d2a8",
+      "name": "scrape company"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2c48a5c1-5264-4f7b-b795-93e645b998e8",
+              "name": "description",
+              "value": "={{ $json.description }}",
+              "type": "string"
+            },
+            {
+              "id": "b89fe65d-35f7-4a6e-a9eb-1defd4c8797e",
+              "name": "name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "a2d22879-da5e-4adf-92b9-ba801d593c08",
+              "name": "staffCount",
+              "value": "={{ $json.staffCount }}",
+              "type": "string"
+            },
+            {
+              "id": "62eec52f-0f56-45c5-8ece-9b665a1a0203",
+              "name": "tagline",
+              "value": "={{ $json.tagline }}",
+              "type": "string"
+            },
+            {
+              "id": "63da408f-f825-4859-bfaa-a16e07f084fc",
+              "name": "companyLinkedInUrl",
+              "value": "={{ $json.url }}",
+              "type": "string"
+            },
+            {
+              "id": "2ddf3ccd-07be-4c5f-9706-0c95c78394d7",
+              "name": "website",
+              "value": "={{ $json.companyPageUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "5f997234-260c-4626-816d-fca94cafe05f",
+              "name": "industry",
+              "value": "={{ $json.specialities[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "d7be500b-46c3-45aa-848d-7524fd145fda",
+              "name": "companyUrn",
+              "value": "={{ $json.entityUrn }}",
+              "type": "string"
+            },
+            {
+              "id": "32028d46-ff2c-46d8-af9b-ad99494525cc",
+              "name": "location",
+              "value": "={{ $json.headquarter.city}}_{{ $json.headquarter.country }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2420,
+        -320
+      ],
+      "id": "d5517fa3-a35f-4530-a52a-e7fe2a21719e",
+      "name": "Set company"
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "create",
+        "projectId": "pspy8g4s1vm6y90",
+        "table": "mbiipmtuxcsimo8",
+        "dataToSend": "autoMapInputData"
+      },
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        2640,
+        -320
+      ],
+      "id": "97dcfde5-10d6-44d5-bc6e-4a7e841bc42d",
+      "name": "Create company",
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "zC5Hl8P4Gzx2m9MT",
+          "name": "Youtube"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://yournoncodb.cloud-station.app/api/v2/tables/muj13p20c3j2tx6/links/cm2ind5mfvc99md/records/{{ $('Set leads').item.json.Id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "nocoDbApiToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=[\"{{ $json.Id }}\"]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2860,
+        -320
+      ],
+      "id": "5af97db7-3ba9-4be4-a5f6-9b8f75b8ab6a",
+      "name": "link lead to company",
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "zC5Hl8P4Gzx2m9MT",
+          "name": "Youtube"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://yournocodb.cloud-station.app/api/v2/tables/muj13p20c3j2tx6/links/cm2ind5mfvc99md/records/{{ $('Set leads').item.json.Id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "nocoDbApiToken",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=[\"{{ $json.Id }}\"]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2020,
+        -120
+      ],
+      "id": "c7be07bc-ae62-4dd2-9342-b78c1416b5d3",
+      "name": "link lead to company2",
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "zC5Hl8P4Gzx2m9MT",
+          "name": "Youtube"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 11,
+              "triggerAtMinute": 53
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -820,
+        -20
+      ],
+      "id": "edcb2585-8e57-4b8f-8b83-ecbed338589a",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "NocoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NocoDB": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "scrape lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "scrape lead": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Set leads",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set leads": {
+      "main": [
+        [
+          {
+            "node": "Update lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update lead": {
+      "main": [
+        [
+          {
+            "node": "scrape company ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "scrape company ?": {
+      "main": [
+        [
+          {
+            "node": "Extract URN",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract URN": {
+      "main": [
+        [
+          {
+            "node": "Get company by urn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get company by urn": {
+      "main": [
+        [
+          {
+            "node": "company exists ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "company exists ?": {
+      "main": [
+        [
+          {
+            "node": "Wait to scrape company",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "link lead to company2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait to scrape company": {
+      "main": [
+        [
+          {
+            "node": "scrape company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "scrape company": {
+      "main": [
+        [
+          {
+            "node": "Set company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set company": {
+      "main": [
+        [
+          {
+            "node": "Create company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create company": {
+      "main": [
+        [
+          {
+            "node": "link lead to company",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "link lead to company": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "link lead to company2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "NocoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}
