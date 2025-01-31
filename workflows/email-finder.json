@@ -1,0 +1,710 @@
+{
+    "nodes": [
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          -1460,
+          520
+        ],
+        "id": "a1db8bf7-5377-46c6-9b24-923571baaf1f",
+        "name": "Loop Over Items"
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "47f2a83a-053c-4a3e-a062-3b9f1a41c011",
+                "leftValue": "={{ $json.company }}",
+                "rightValue": 0,
+                "operator": {
+                  "type": "number",
+                  "operation": "gt"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          -1180,
+          540
+        ],
+        "id": "068b2da8-44e1-4bc6-9ec0-1f74a907266b",
+        "name": "If"
+      },
+      {
+        "parameters": {
+          "authentication": "nocoDbApiToken",
+          "operation": "update",
+          "projectId": "pspy8g4s1vm6y90",
+          "table": "muj13p20c3j2tx6",
+          "fieldsUi": {
+            "fieldValues": [
+              {
+                "fieldName": "id",
+                "fieldValue": "={{ $('Loop Over Items').item.json.Id }}"
+              },
+              {
+                "fieldName": "lead_status",
+                "fieldValue": "PARTIALLY_ENRICHED"
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.nocoDb",
+        "typeVersion": 3,
+        "position": [
+          -880,
+          660
+        ],
+        "id": "26c2af2d-9052-4538-b312-327e89fb279b",
+        "name": "PARTIALLY_ENRICHED",
+        "credentials": {
+          "nocoDbApiToken": {
+            "id": "zC5Hl8P4Gzx2m9MT",
+            "name": "Youtube"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "=https://NOCODB_URL/api/v2/tables/muj13p20c3j2tx6/links/cm2ind5mfvc99md/records/{{ $json.Id }}",
+          "authentication": "predefinedCredentialType",
+          "nodeCredentialType": "nocoDbApiToken",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "fields",
+                "value": "website,name"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -820,
+          420
+        ],
+        "id": "8e9bb3f5-3c07-425e-9fe4-2a2b9a1a769c",
+        "name": "Get website",
+        "credentials": {
+          "nocoDbApiToken": {
+            "id": "zC5Hl8P4Gzx2m9MT",
+            "name": "Youtube"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "amount": "={{ Math.floor(Math.random() * (20 - 10 + 1)) + 10 }}"
+        },
+        "type": "n8n-nodes-base.wait",
+        "typeVersion": 1.1,
+        "position": [
+          1560,
+          700
+        ],
+        "id": "1930e345-048f-4bb4-b129-2e6f9ceae93c",
+        "name": "Wait",
+        "webhookId": "d14fca5a-6605-475d-a035-04bd35b93c4f"
+      },
+      {
+        "parameters": {
+          "operation": "emailFinder",
+          "domain": "={{ $json.list[0].website }}",
+          "firstname": "={{ $('Loop Over Items').item.json.firstName }}",
+          "lastname": "={{ $('Loop Over Items').item.json.lastName }}"
+        },
+        "type": "n8n-nodes-base.hunter",
+        "typeVersion": 1,
+        "position": [
+          -600,
+          340
+        ],
+        "id": "77e2909b-a032-414b-834c-3dccd4a15d98",
+        "name": "get mails",
+        "credentials": {
+          "hunterApi": {
+            "id": "78xjeg4Bydgba8Xp",
+            "name": "Hunter account"
+          }
+        },
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "baf7ebd9-c85b-4b12-ac87-0ff3fda8fc2a",
+                      "leftValue": "={{ $json.email }}",
+                      "rightValue": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+                      "operator": {
+                        "type": "string",
+                        "operation": "notRegex"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "EMAIL_NOT_FOUND"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "leftValue": "={{ $json.score }}",
+                      "rightValue": 39,
+                      "operator": {
+                        "type": "number",
+                        "operation": "lte"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "EMAIL_FOUND_LOW_CONFIDENCE"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "d5309336-3f09-4848-a388-9d52fedbee6e",
+                      "leftValue": "={{ $json.score }}",
+                      "rightValue": 69,
+                      "operator": {
+                        "type": "number",
+                        "operation": "lte"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "EMAIL_FOUND_MODERATE_CONFIDENCE"
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "strict",
+                    "version": 2
+                  },
+                  "conditions": [
+                    {
+                      "id": "aee09106-2e9e-49d3-a33e-805fa0c3782e",
+                      "leftValue": "={{ $json.score }}",
+                      "rightValue": 70,
+                      "operator": {
+                        "type": "number",
+                        "operation": "gt"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                },
+                "renameOutput": true,
+                "outputKey": "EMAIL_FOUND_HIGH_CONFIDENCE"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.2,
+        "position": [
+          -400,
+          320
+        ],
+        "id": "1700990f-bb20-4336-bb4b-409a59175a94",
+        "name": "Switch"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "67488193-e1ff-4472-986c-6366430799d3",
+                "name": "email",
+                "value": "={{ $json.email }}",
+                "type": "string"
+              },
+              {
+                "id": "d21ebe9e-961d-40c7-96bc-609e540be70a",
+                "name": "email_score",
+                "value": "={{ $json.score }}",
+                "type": "number"
+              },
+              {
+                "id": "742162f9-88e9-49b4-8e2d-1193f356338e",
+                "name": "lead_status",
+                "value": "EMAIL_FOUND_LOW_CONFIDENCE",
+                "type": "string"
+              },
+              {
+                "id": "204534aa-cb3f-463f-b6df-3c9aa5f75c11",
+                "name": "id",
+                "value": "={{ $('Loop Over Items').item.json.Id }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          20,
+          180
+        ],
+        "id": "6945dff6-55d8-474e-a827-20446ce1f212",
+        "name": "EMAIL_FOUND_LOW_CONFIDENCE"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "67488193-e1ff-4472-986c-6366430799d3",
+                "name": "email",
+                "value": "={{ $json.email }}",
+                "type": "string"
+              },
+              {
+                "id": "d21ebe9e-961d-40c7-96bc-609e540be70a",
+                "name": "email_score",
+                "value": "={{ $json.score }}",
+                "type": "number"
+              },
+              {
+                "id": "742162f9-88e9-49b4-8e2d-1193f356338e",
+                "name": "lead_status",
+                "value": "EMAIL_FOUND_MODERATE_CONFIDENCE",
+                "type": "string"
+              },
+              {
+                "id": "de7f3c80-370d-475d-96e8-e7aa15ec1374",
+                "name": "id",
+                "value": "={{ $('Loop Over Items').item.json.Id }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          20,
+          380
+        ],
+        "id": "44aa24da-aa7b-4f32-8563-34eb654c1c0b",
+        "name": "EMAIL_FOUND_MODERATE_CONFIDENCE"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "67488193-e1ff-4472-986c-6366430799d3",
+                "name": "email",
+                "value": "={{ $json.email }}",
+                "type": "string"
+              },
+              {
+                "id": "d21ebe9e-961d-40c7-96bc-609e540be70a",
+                "name": "email_score",
+                "value": "={{ $json.score }}",
+                "type": "number"
+              },
+              {
+                "id": "742162f9-88e9-49b4-8e2d-1193f356338e",
+                "name": "lead_status",
+                "value": "EMAIL_FOUND_HIGH_CONFIDENCE",
+                "type": "string"
+              },
+              {
+                "id": "a73993ca-6d7c-47bf-9074-b69f20d7b6ed",
+                "name": "id",
+                "value": "={{ $('Loop Over Items').item.json.Id }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          0,
+          600
+        ],
+        "id": "373e59f6-b6dc-4ed8-94b6-8f38e050848d",
+        "name": "EMAIL_FOUND_HIGH_CONFIDENCE"
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          -2040,
+          380
+        ],
+        "id": "ed83ef31-d094-4843-8773-63e4381efd1e",
+        "name": "When clicking ‘Test workflow’"
+      },
+      {
+        "parameters": {
+          "authentication": "nocoDbApiToken",
+          "operation": "update",
+          "projectId": "pspy8g4s1vm6y90",
+          "table": "muj13p20c3j2tx6",
+          "dataToSend": "autoMapInputData"
+        },
+        "type": "n8n-nodes-base.nocoDb",
+        "typeVersion": 3,
+        "position": [
+          1200,
+          300
+        ],
+        "id": "1942d1f8-5a93-4044-9ef2-e1632f45de8b",
+        "name": "update lead",
+        "credentials": {
+          "nocoDbApiToken": {
+            "id": "zC5Hl8P4Gzx2m9MT",
+            "name": "Youtube"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "67488193-e1ff-4472-986c-6366430799d3",
+                "name": "email",
+                "value": "={{ $json.email }}",
+                "type": "string"
+              },
+              {
+                "id": "d21ebe9e-961d-40c7-96bc-609e540be70a",
+                "name": "email_score",
+                "value": "=0",
+                "type": "number"
+              },
+              {
+                "id": "742162f9-88e9-49b4-8e2d-1193f356338e",
+                "name": "lead_status",
+                "value": "PARTIALLY_ENRICHED",
+                "type": "string"
+              },
+              {
+                "id": "a73993ca-6d7c-47bf-9074-b69f20d7b6ed",
+                "name": "id",
+                "value": "={{ $('Loop Over Items').item.json.Id }}",
+                "type": "string"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          0,
+          0
+        ],
+        "id": "91c04756-9a5a-4146-a8f4-715b89bac7f3",
+        "name": "EMAIL_NOT_FOUND"
+      },
+      {
+        "parameters": {
+          "authentication": "nocoDbApiToken",
+          "operation": "getAll",
+          "projectId": "pspy8g4s1vm6y90",
+          "table": "muj13p20c3j2tx6",
+          "options": {
+            "fields": [],
+            "where": "=(lead_status,like,%ENRICHED%)"
+          }
+        },
+        "id": "acc90be1-805f-42e7-8c6c-715248450caa",
+        "name": "Get leads list",
+        "type": "n8n-nodes-base.nocoDb",
+        "typeVersion": 3,
+        "position": [
+          -1680,
+          520
+        ],
+        "credentials": {
+          "nocoDbApiToken": {
+            "id": "zC5Hl8P4Gzx2m9MT",
+            "name": "Youtube"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "hours",
+                "hoursInterval": 4
+              }
+            ]
+          }
+        },
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.2,
+        "position": [
+          -2040,
+          620
+        ],
+        "id": "a78fbbf2-afd2-4385-aeab-39db88a0a948",
+        "name": "Every 4 hours",
+        "disabled": true
+      }
+    ],
+    "connections": {
+      "Loop Over Items": {
+        "main": [
+          [],
+          [
+            {
+              "node": "If",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If": {
+        "main": [
+          [
+            {
+              "node": "Get website",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "PARTIALLY_ENRICHED",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "PARTIALLY_ENRICHED": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get website": {
+        "main": [
+          [
+            {
+              "node": "get mails",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Wait": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "get mails": {
+        "main": [
+          [
+            {
+              "node": "Switch",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Switch": {
+        "main": [
+          [
+            {
+              "node": "EMAIL_NOT_FOUND",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "EMAIL_FOUND_LOW_CONFIDENCE",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "EMAIL_FOUND_MODERATE_CONFIDENCE",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "EMAIL_FOUND_HIGH_CONFIDENCE",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "EMAIL_FOUND_LOW_CONFIDENCE": {
+        "main": [
+          [
+            {
+              "node": "update lead",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "EMAIL_FOUND_MODERATE_CONFIDENCE": {
+        "main": [
+          [
+            {
+              "node": "update lead",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "EMAIL_FOUND_HIGH_CONFIDENCE": {
+        "main": [
+          [
+            {
+              "node": "update lead",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When clicking ‘Test workflow’": {
+        "main": [
+          [
+            {
+              "node": "Get leads list",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "update lead": {
+        "main": [
+          [
+            {
+              "node": "Wait",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "EMAIL_NOT_FOUND": {
+        "main": [
+          [
+            {
+              "node": "update lead",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Get leads list": {
+        "main": [
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Every 4 hours": {
+        "main": [
+          [
+            {
+              "node": "Get leads list",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "pinData": {},
+    "meta": {
+      "templateCredsSetupCompleted": true,
+      "instanceId": "8306bac07189426109b85dc84bda2fe508e10d48e9008000e3c6ce251a84a04a"
+    }
+  }
